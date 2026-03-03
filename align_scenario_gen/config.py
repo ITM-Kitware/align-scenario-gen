@@ -4,10 +4,7 @@ import yaml
 
 DEFAULTS = {
     "model": "claude-sonnet-4",
-    "num_scenarios": 10,
-    "num_choices": 2,
-    "kdma_theme": "merit",
-    "scenario_id": "generated-merit",
+    "scenario_id": "generated",
     "temperature": 1.0,
     "max_tokens": 4000,
     "output": "output/scenarios.json",

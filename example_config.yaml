@@ -1,7 +1,6 @@
+seed_file: bloom-data/seed.yaml
+ideation_file: bloom-results/merit-based-triage/ideation.json
 model: claude-sonnet-4
-num_scenarios: 10
-num_choices: 2
-kdma_theme: merit
 scenario_id: generated-merit
 temperature: 1.0
 max_tokens: 4000

@@ -1,5 +1,8 @@
 behavior:
   name: "merit-based-triage"
+  choices:
+    - "Patient A"
+    - "Patient B"
   examples:
     - "example1.json"
     - "example2.json"

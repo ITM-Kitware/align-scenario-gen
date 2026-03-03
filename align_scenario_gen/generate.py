@@ -31,14 +31,31 @@ def _call_llm(config: dict, messages: list[dict]) -> str:
     return parse_message(response)["content"]
 
 
-def run(config: dict) -> list[dict]:
-    user_prompt = build_user_prompt(config["kdma_theme"], config["num_choices"])
-    messages = [{"role": "user", "content": user_prompt}]
+def _load_ideation(path: str | Path) -> list[dict]:
+    data = json.loads(Path(path).read_text())
+    return data["variations"]
 
+
+def _load_seed_choices(path: str | Path) -> list[str]:
+    import yaml
+
+    data = yaml.safe_load(Path(path).read_text())
+    return data["behavior"]["choices"]
+
+
+def _generate_from_ideation(config: dict) -> list[dict]:
+    variations = _load_ideation(config["ideation_file"])
+    choices = _load_seed_choices(config["seed_file"])
+    scenario_id = config["scenario_id"]
     max_retries = 3
     records = []
-    for i in range(config["num_scenarios"]):
-        print(f"Generating scenario {i + 1}/{config['num_scenarios']}...")
+
+    for i, variation in enumerate(variations):
+        description = variation["description"]
+        print(f"Generating scenario {i + 1}/{len(variations)}...")
+        user_prompt = build_user_prompt(description, choices)
+        messages = [{"role": "user", "content": user_prompt}]
+
         for attempt in range(max_retries):
             content = _call_llm(config, messages)
             try:
@@ -49,8 +66,15 @@ def run(config: dict) -> list[dict]:
                     print(f"  Parse failed ({e}), retrying...")
                 else:
                     raise
-        record = scenario_to_record(scenario, config["scenario_id"], i)
-        records.append(record)
+
+        scenario["choices"] = [{"label": c} for c in choices]
+        records.append(scenario_to_record(scenario, scenario_id, i))
+
+    return records
+
+
+def run(config: dict) -> list[dict]:
+    records = _generate_from_ideation(config)
 
     output_path = Path(config["output"])
     output_path.parent.mkdir(parents=True, exist_ok=True)

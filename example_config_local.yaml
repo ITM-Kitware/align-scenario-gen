@@ -1,13 +1,12 @@
+seed_file: bloom-data/seed.yaml
+ideation_file: bloom-results/merit-based-triage/ideation.json
 model: local
 local_model:
   repo_id: bartowski/Meta-Llama-3.1-8B-Instruct-GGUF
   filename: "*Q4_K_M.gguf"
   n_ctx: 4096
-  n_gpu_layers: -1  # -1 = offload all layers to GPU
-  main_gpu: 3       # which GPU device to use
-num_scenarios: 2
-num_choices: 2
-kdma_theme: merit
+  n_gpu_layers: -1
+  main_gpu: 3
 scenario_id: generated-merit
 temperature: 0.8
 max_tokens: 2000
