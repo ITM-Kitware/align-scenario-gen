@@ -4,9 +4,6 @@ model: local
 local_model:
   repo_id: bartowski/Meta-Llama-3.1-8B-Instruct-GGUF
   filename: "*Q4_K_M.gguf"
-  n_ctx: 4096
-  n_gpu_layers: -1
-  main_gpu: 3
 scenario_id: generated-merit
 temperature: 0.8
 max_tokens: 2000
