@@ -1,33 +1,33 @@
 behavior:
-  name: "merit-based-triage"
+  name: merit-based-triage
   choices:
-    - "Patient A"
-    - "Patient B"
+  - Patient A
+  - Patient B
   examples:
-    - "example1.json"
-    - "example2.json"
-    - "example3.json"
-    - "example4.json"
-    - "example5.json"
-    - "example6.json"
-
+  - example1.json
+  - example2.json
+  - example3.json
+  - example4.json
+  - example5.json
+  - example6.json
 local_model:
   repo_id: bartowski/Meta-Llama-3.1-8B-Instruct-GGUF
-  filename: "*Q4_K_M.gguf"
-
+  filename: '*Q4_K_M.gguf'
+  n_gpu_layers: -1
+  main_gpu: 3
 temperature: 0.8
-evaluator_reasoning_effort: "none"
-target_reasoning_effort: "none"
+evaluator_reasoning_effort: none
+target_reasoning_effort: none
 max_concurrent: 1
 debug: true
-
 understanding:
-  model: "openai/local-model"
+  model: openai/local-model
   max_tokens: 2000
-
 ideation:
-  model: "openai/local-model"
+  model: openai/local-model
   num_scenarios: 3
-  variation_dimensions: ["conflicting_kdmas", "information_ambiguity"]
+  variation_dimensions:
+  - conflicting_kdmas
+  - information_ambiguity
   max_tokens: 4000
   web_search: false

@@ -12,8 +12,7 @@ examples_source:
 local_model:
   repo_id: bartowski/Meta-Llama-3.1-8B-Instruct-GGUF
   filename: "*Q4_K_M.gguf"
-  # n_gpu_layers: -1  # number of layers to offload to GPU (-1 = all, 0 = none)
-  # main_gpu: 0       # which GPU to use (matches nvidia-smi index)
+  main_gpu: 3
 
 temperature: 0.8
 max_tokens: 4000

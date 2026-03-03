@@ -28,7 +28,7 @@ def wait_for_server(url: str, timeout: int = 120):
     start = time.time()
     while time.time() - start < timeout:
         try:
-            urllib.request.urlopen(f"{url}/health")
+            urllib.request.urlopen(f"{url}/v1/models")
             return
         except Exception:
             time.sleep(1)
@@ -80,7 +80,7 @@ def run_bloom(config: dict):
     repo_id = local_model["repo_id"]
     filename = local_model["filename"]
     n_ctx = local_model.get("n_ctx", 4096)
-    n_gpu_layers = local_model.get("n_gpu_layers", 0)
+    main_gpu = local_model.get("main_gpu", 0)
 
     print(f"Resolving model {repo_id} ({filename})...")
     model_path = resolve_model_path(repo_id, filename)
@@ -88,7 +88,9 @@ def run_bloom(config: dict):
     port = 8000
     base_url = f"http://localhost:{port}"
 
-    print(f"Starting llama.cpp server on port {port}...")
+    env = {**os.environ, "CUDA_VISIBLE_DEVICES": str(main_gpu)}
+
+    print(f"Starting llama.cpp server on port {port} (GPU {main_gpu})...")
     server = subprocess.Popen(
         [
             sys.executable,
@@ -99,10 +101,11 @@ def run_bloom(config: dict):
             "--n_ctx",
             str(n_ctx),
             "--n_gpu_layers",
-            str(n_gpu_layers),
+            "-1",
             "--port",
             str(port),
         ],
+        env=env,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )

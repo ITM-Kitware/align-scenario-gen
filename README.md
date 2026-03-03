@@ -38,7 +38,6 @@ examples_source: # where to find existing experiment results
 local_model: # HuggingFace GGUF model, used by all steps
   repo_id: bartowski/Meta-Llama-3.1-8B-Instruct-GGUF
   filename: "*Q4_K_M.gguf"
-  # n_gpu_layers: -1  # number of layers to offload to GPU (-1 = all, 0 = none)
   # main_gpu: 0       # which GPU to use (matches nvidia-smi index)
   # n_ctx: 4096
 
