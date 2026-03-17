@@ -117,9 +117,11 @@ def run_bloom(config: dict):
         os.environ["OPENAI_API_KEY"] = "not-needed"
         os.environ["OPENAI_API_BASE"] = f"{base_url}/v1"
 
-        from bloom import utils
+        from bloom import set_debug_mode, utils
         from bloom.stages.step1_understanding import run_understanding
         from bloom.stages.step2_ideation import run_ideation
+
+        set_debug_mode(True)
 
         bloom_config = utils.load_config(str(seed_path), config_dir=config_dir)
 
