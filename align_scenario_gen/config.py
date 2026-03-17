@@ -12,6 +12,9 @@ def load_config(path: str | Path) -> dict:
     config.setdefault("temperature", 0.8)
     config.setdefault("max_tokens", 4000)
     config.setdefault("output", "output/scenarios.json")
+    config.setdefault("evaluate", {})
+    config["evaluate"].setdefault("input", config["output"])
+    config["evaluate"].setdefault("output", "output/eval_results.json")
 
     config["_derived"] = {
         "examples_dir": f"bloom-data/behaviors/examples/{name}",

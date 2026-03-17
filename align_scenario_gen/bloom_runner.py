@@ -136,6 +136,16 @@ def run_bloom(config: dict):
         run_ideation(config=bloom_config, config_dir=config_dir)
 
         results_dir = Path(config["_derived"]["bloom_results_dir"])
+
+        # Patch model name in results to reflect actual model
+        actual_model = f"{repo_id} ({filename})"
+        for json_file in results_dir.glob("*.json"):
+            import json
+            data = json.loads(json_file.read_text())
+            if data.get("model") == "openai/local-model":
+                data["model"] = actual_model
+                json_file.write_text(json.dumps(data, indent=2))
+
         print("\n=== Done ===")
         for f in sorted(results_dir.glob("*.json")):
             print(f"Output: {f}")
