@@ -22,7 +22,7 @@ def resolve_model_path(repo_id: str, filename: str) -> str:
     return hf_hub_download(repo_id=repo_id, filename=matches[0])
 
 
-def wait_for_server(url: str, timeout: int = 120):
+def wait_for_server(url: str, timeout: int = 300):
     import urllib.request
 
     start = time.time()
@@ -38,7 +38,10 @@ def wait_for_server(url: str, timeout: int = 120):
 
 def _build_seed(config: dict) -> dict:
     examples_dir = Path(config["_derived"]["examples_dir"])
-    examples = sorted(f.name for f in examples_dir.glob("example*.json"))
+    behavior_name = config["behavior"]["name"]
+    examples = sorted(
+        f"{behavior_name}/{f.stem}" for f in examples_dir.glob("example*.json")
+    )
 
     behavior = {**config["behavior"], "examples": examples}
     ideation_cfg = config.get("ideation", {})
@@ -80,7 +83,6 @@ def run_bloom(config: dict):
     repo_id = local_model["repo_id"]
     filename = local_model["filename"]
     n_ctx = local_model.get("n_ctx", 4096)
-    main_gpu = local_model.get("main_gpu", 0)
 
     print(f"Resolving model {repo_id} ({filename})...")
     model_path = resolve_model_path(repo_id, filename)
@@ -88,9 +90,12 @@ def run_bloom(config: dict):
     port = 8000
     base_url = f"http://localhost:{port}"
 
-    env = {**os.environ, "CUDA_VISIBLE_DEVICES": str(main_gpu)}
+    env = os.environ.copy()
+    if "main_gpu" in local_model:
+        env["CUDA_VISIBLE_DEVICES"] = str(local_model["main_gpu"])
 
-    print(f"Starting llama.cpp server on port {port} (GPU {main_gpu})...")
+    gpu_info = env.get("CUDA_VISIBLE_DEVICES", "all")
+    print(f"Starting llama.cpp server on port {port} (CUDA_VISIBLE_DEVICES={gpu_info})...")
     server = subprocess.Popen(
         [
             sys.executable,
@@ -107,7 +112,6 @@ def run_bloom(config: dict):
         ],
         env=env,
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
     )
 
     try:

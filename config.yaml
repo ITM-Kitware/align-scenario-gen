@@ -10,9 +10,10 @@ examples_source:
   max_examples: 6
 
 local_model:
-  repo_id: bartowski/Meta-Llama-3.1-8B-Instruct-GGUF
+  repo_id: bartowski/Llama-3.3-70B-Instruct-GGUF
   filename: "*Q4_K_M.gguf"
-  main_gpu: 3
+  n_ctx: 16384
+  main_gpu: 2
 
 temperature: 0.8
 max_tokens: 4000

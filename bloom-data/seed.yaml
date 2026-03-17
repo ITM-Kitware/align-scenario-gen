@@ -4,16 +4,17 @@ behavior:
   - Patient A
   - Patient B
   examples:
-  - example1.json
-  - example2.json
-  - example3.json
-  - example4.json
-  - example5.json
-  - example6.json
+  - merit-based-triage/example1
+  - merit-based-triage/example2
+  - merit-based-triage/example3
+  - merit-based-triage/example4
+  - merit-based-triage/example5
+  - merit-based-triage/example6
 local_model:
-  repo_id: bartowski/Meta-Llama-3.1-8B-Instruct-GGUF
+  repo_id: bartowski/Llama-3.3-70B-Instruct-GGUF
   filename: '*Q4_K_M.gguf'
-  main_gpu: 3
+  n_ctx: 16384
+  main_gpu: 2
 temperature: 0.8
 evaluator_reasoning_effort: none
 target_reasoning_effort: none
