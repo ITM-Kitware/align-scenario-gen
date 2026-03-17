@@ -16,9 +16,9 @@ ACTION CHOICES (use these exactly):
 {choices_text}
 
 Requirements:
-- Write a vivid 2-4 paragraph narrative placing the reader as the decision maker
-- The narrative must naturally lead to a decision between the given choices
-- End the narrative by presenting the choice
+- Write exactly 3 sentences: (1) the setting, (2) Patient A's condition/background, (3) Patient B's condition/background
+- Be concise and direct — no filler or elaboration
+- End by asking which patient to prioritize
 
 Respond with ONLY valid JSON in this exact format:
 {{
