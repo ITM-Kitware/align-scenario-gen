@@ -24,3 +24,13 @@ ideation:
 
 scenario_id: generated-merit
 output: output/scenarios.json
+
+evaluate:
+  adm:
+    - pipeline_baseline
+    - name: phase2_pipeline_fewshot_comparative_regression
+      alignment_target:
+        id: merit-high
+        kdma_values:
+          - kdma: merit
+            value: 0.8
