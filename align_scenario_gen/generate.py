@@ -36,7 +36,7 @@ def _chat(base_url: str, messages: list[dict], system_prompt: str,
 
 def run_generate(config: dict) -> list[dict]:
     variations = _load_ideation(config["_derived"]["ideation_file"])
-    choices = config["behavior"]["choices"]
+    frame_choices = config["_resolved"]["frame"]["choices"]
     local_model = config["local_model"]
     scenario_id = config["scenario_id"]
     max_retries = 3
@@ -46,7 +46,7 @@ def run_generate(config: dict) -> list[dict]:
         for i, variation in enumerate(variations):
             description = variation["description"]
             print(f"Generating scenario {i + 1}/{len(variations)}...")
-            user_prompt = build_user_prompt(description, choices)
+            user_prompt = build_user_prompt(description, config)
             messages = [{"role": "user", "content": user_prompt}]
 
             for attempt in range(max_retries):
@@ -66,8 +66,8 @@ def run_generate(config: dict) -> list[dict]:
                     else:
                         raise
 
-            scenario["choices"] = [{"label": c} for c in choices]
-            records.append(scenario_to_record(scenario, scenario_id, i))
+            scenario["choices"] = frame_choices
+            records.append(scenario_to_record(scenario, scenario_id, i, config["_resolved"]))
 
     output_path = Path(config["output"])
     output_path.parent.mkdir(parents=True, exist_ok=True)

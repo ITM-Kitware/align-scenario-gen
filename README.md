@@ -24,16 +24,34 @@ uv sync
 Edit `config.yaml`:
 
 ```yaml
-behavior:
-  name: "merit-based-triage" # used to derive intermediate paths
-  choices: # fixed choices reused across all scenarios
-    - "Patient A"
-    - "Patient B"
+run:
+  behavior_id: merit-vs-medical-two-patient-triage
 
-examples_source: # where to find existing experiment results
-  experiments_dir: /path/to/experiments
-  pattern: "phase2_baseline/Feb2026-MF-*"
-  max_examples: 6
+frames:
+  two_patient_triage:
+    prompt_template: two_patient_triage
+    choices:
+      - label: Treat Patient A
+      - label: Treat Patient B
+
+behaviors:
+  merit-vs-medical-two-patient-triage:
+    frame: two_patient_triage
+    active_kdmas:
+      medical: { favors: Patient A, strength: high }
+      merit: { favors: Patient B, strength: high }
+    generation_guidance:
+      - Patient A should be more medically urgent than Patient B.
+      - Patient B should have stronger merit cues than Patient A.
+    examples:
+      source: experiments
+      experiments_dir: /data/shared/phase2_feb2026_results_local/phase2_baseline
+      pattern: "Feb2026-MF-*"
+      max_examples: 6
+      kdma: merit
+    variation_dimensions:
+      - medical_gap
+      - merit_gap
 
 local_model: # HuggingFace GGUF model, used by all steps
   repo_id: bartowski/Meta-Llama-3.1-8B-Instruct-GGUF
@@ -45,16 +63,18 @@ temperature: 0.8
 max_tokens: 4000
 
 ideation:
-  num_scenarios: 3 # base scenarios (total = num_scenarios × (1 + len(variation_dimensions)))
-  variation_dimensions: # each base scenario gets one variation per dimension
-    - "conflicting_kdmas"
-    - "information_ambiguity"
-
-scenario_id: generated-merit # groups scenarios in align-system
-output: output/scenarios.json
+  num_scenarios: 3
 ```
 
-Paths derived from `behavior.name`:
+One run resolves one selected `behavior_id` into:
+
+- a bloom behavior name and description
+- a fixed scenario frame
+- a fixed intended KDMA tension profile
+- a fixed example source
+- a fixed variation-dimension set
+
+Paths are derived from the resolved behavior id:
 
 - Examples: `bloom-data/behaviors/examples/<name>/`
 - Bloom results: `bloom-results/<name>/`
@@ -78,10 +98,10 @@ uv run align-scenario-gen config.yaml --step generate    # generate scenario nar
 
 ### What each step does
 
-**convert** — Reads `examples_source` from config, extracts align-system experiment results into bloom example transcripts at `bloom-data/behaviors/examples/<name>/`.
+**convert** — Reads the selected behavior's `examples` spec, extracts align-system experiment results or copies manual examples into `bloom-data/behaviors/examples/<name>/`.
 
-**bloom** — Writes a `bloom-data/seed.yaml` from the unified config (injecting bloom-specific model keys), downloads the model (to `~/.cache/huggingface/`), starts a local llama.cpp server, runs bloom's understanding and ideation stages, then shuts down the server. Output goes to `bloom-results/<name>/`.
+**bloom** — Writes a `bloom-data/seed.yaml` from the resolved behavior config, downloads the model (to `~/.cache/huggingface/`), starts a local llama.cpp server, runs bloom's understanding and ideation stages, then shuts down the server. Output goes to `bloom-results/<name>/`.
 
-**generate** — Reads ideation output, generates vivid narrative scenarios via the local model, and writes align-system InputOutputFile JSON to the configured output path.
+**generate** — Reads ideation output, applies the selected frame and intended KDMA tensions to the local generation prompt, and writes align-system InputOutputFile JSON to the configured output path.
 
 Output is an align-system InputOutputFile JSON array, ready to use with the `minimal` hydration domain.

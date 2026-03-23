@@ -2,6 +2,8 @@ import os
 
 from llama_cpp import Llama
 
+from .gpu import resolve_cuda_visible_devices
+
 _model_cache: dict[str, Llama] = {}
 
 def get_model(local_cfg: dict) -> Llama:
@@ -9,8 +11,7 @@ def get_model(local_cfg: dict) -> Llama:
     filename = local_cfg["filename"]
     key = f"{repo_id}:{filename}"
     if key not in _model_cache:
-        if "main_gpu" in local_cfg:
-            os.environ["CUDA_VISIBLE_DEVICES"] = str(local_cfg["main_gpu"])
+        os.environ.update(resolve_cuda_visible_devices(local_cfg))
         print(f"Loading model {repo_id} ({filename})...")
         _model_cache[key] = Llama.from_pretrained(
             repo_id=repo_id,

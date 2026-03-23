@@ -1,10 +1,11 @@
 """Convert align-system input_output.json records into bloom example transcripts."""
 
 import json
+import shutil
 from pathlib import Path
 
 
-def record_to_transcript(record: dict) -> dict | None:
+def record_to_transcript(record: dict, kdma_name: str) -> dict | None:
     inp = record.get("input", {})
     out = record.get("output")
     if not out or not inp.get("full_state", {}).get("unstructured"):
@@ -18,12 +19,13 @@ def record_to_transcript(record: dict) -> dict | None:
     action = out.get("action", {})
     chosen = action.get("unstructured", "")
     justification = action.get("justification", "")
-    kdma = action.get("kdma_association", {})
-    merit_val = kdma.get("merit", "?")
+    kdma_scores = action.get("kdma_association", {})
+    alignment_val = kdma_scores.get(kdma_name)
 
     assistant_content = f"I choose: {chosen}\n\nReasoning: {justification}"
-    if merit_val != "?":
-        assistant_content += f"\n\n[Merit alignment: {merit_val}]"
+    if alignment_val is not None:
+        label = kdma_name.replace("_", " ").title()
+        assistant_content += f"\n\n[{label} alignment: {alignment_val}]"
 
     return {
         "conversation": [
@@ -35,12 +37,22 @@ def record_to_transcript(record: dict) -> dict | None:
 
 def run_convert(config: dict):
     examples_source = config["examples_source"]
+    output_dir = Path(config["_derived"]["examples_dir"])
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for stale_file in output_dir.glob("example*.json"):
+        stale_file.unlink()
+
+    source_type = examples_source.get("source", "experiments")
+    if source_type == "manual":
+        _copy_manual_examples(config, examples_source, output_dir)
+        return
+    if source_type != "experiments":
+        raise ValueError(f"Unsupported examples source: {source_type}")
+
     experiments_dir = Path(examples_source["experiments_dir"])
     pattern = examples_source["pattern"]
     max_examples = examples_source.get("max_examples", 6)
-
-    output_dir = Path(config["_derived"]["examples_dir"])
-    output_dir.mkdir(parents=True, exist_ok=True)
+    kdma_name = examples_source["kdma"]
 
     exp_dirs = sorted(experiments_dir.glob(pattern))
     example_num = 0
@@ -52,7 +64,7 @@ def run_convert(config: dict):
 
         records = json.loads(io_file.read_text())
         for record in records[:2]:
-            transcript = record_to_transcript(record)
+            transcript = record_to_transcript(record, kdma_name)
             if not transcript:
                 continue
 
@@ -60,7 +72,22 @@ def run_convert(config: dict):
             out_path = output_dir / f"example{example_num}.json"
             out_path.write_text(json.dumps(transcript, indent=2))
 
-        if example_num >= max_examples:
-            break
+            if example_num >= max_examples:
+                print(f"Wrote {example_num} examples to {output_dir}")
+                return
 
     print(f"Wrote {example_num} examples to {output_dir}")
+
+
+def _copy_manual_examples(config: dict, examples_source: dict, output_dir: Path):
+    config_dir = Path(config["_config_path"]).parent
+    paths = examples_source.get("paths", [])
+    for index, raw_path in enumerate(paths, start=1):
+        src = Path(raw_path)
+        if not src.is_absolute():
+            src = (config_dir / src).resolve()
+        if not src.exists():
+            raise FileNotFoundError(f"Manual example not found: {src}")
+        dst = output_dir / f"example{index}.json"
+        shutil.copyfile(src, dst)
+    print(f"Copied {len(paths)} manual examples to {output_dir}")

@@ -7,6 +7,8 @@ import time
 from contextlib import contextmanager
 from fnmatch import fnmatch
 
+from .gpu import current_gpu_visibility, resolve_cuda_visible_devices
+
 
 def _resolve_model_path(repo_id: str, filename: str) -> str:
     from huggingface_hub import hf_hub_download, list_repo_files
@@ -43,11 +45,9 @@ def llm_server(local_model: dict, port: int = 8000):
     print(f"Resolving model {repo_id} ({filename})...")
     model_path = _resolve_model_path(repo_id, filename)
 
-    env = os.environ.copy()
-    if "main_gpu" in local_model:
-        env["CUDA_VISIBLE_DEVICES"] = str(local_model["main_gpu"])
+    env = resolve_cuda_visible_devices(local_model, os.environ.copy())
 
-    gpu_info = env.get("CUDA_VISIBLE_DEVICES", "all")
+    gpu_info = current_gpu_visibility(env)
     base_url = f"http://localhost:{port}"
     print(f"Starting llama.cpp server on port {port} (CUDA_VISIBLE_DEVICES={gpu_info})...")
 
