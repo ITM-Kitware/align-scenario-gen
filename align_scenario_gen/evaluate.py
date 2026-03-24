@@ -119,7 +119,7 @@ def _run_adm(adm_name, records, alignment_target=None):
     instance, inference_kwargs = _instantiate_adm(adm_config)
     choose_fn = getattr(instance, "top_level_choose_action", instance.choose_action)
 
-    results = []
+    io_records = []
     for i, record in enumerate(records):
         inp = record["input"]
         print(f"  [{adm_name}] Scenario {i + 1}/{len(records)}...")
@@ -138,19 +138,34 @@ def _run_adm(adm_name, records, alignment_target=None):
         else:
             action, choice_info = raw_result, {}
 
-        results.append({
-            "scene_id": inp["full_state"]["meta_info"]["scene_id"],
-            "chosen_action": action.unstructured,
-            "justification": getattr(action, "justification", None),
+        # Find which choice index was selected
+        choices = inp.get("choices", [])
+        choice_idx = next(
+            (j for j, c in enumerate(choices) if c["unstructured"] == action.unstructured),
+            0,
+        )
+
+        io_records.append({
+            "input": inp,
+            "output": {
+                "choice": choice_idx,
+                "action": {
+                    "action_id": action.action_id,
+                    "action_type": action.action_type,
+                    "unstructured": action.unstructured,
+                    "justification": getattr(action, "justification", None),
+                },
+            },
+            "choice_info": choice_info if isinstance(choice_info, dict) else {},
         })
 
-    return results
+    return io_records
 
 
 def run_evaluate(config: dict):
     evaluate_cfg = config.get("evaluate", {})
     scenarios_path = Path(evaluate_cfg.get("input", config["output"]))
-    output_path = Path(evaluate_cfg.get("output", "output/eval_results.json"))
+    output_dir = Path(evaluate_cfg.get("output", f"output/{config['scenario_id']}"))
 
     # Support single ADM or list of ADMs, each with optional alignment_target
     adm_cfg = evaluate_cfg.get("adm", "random")
@@ -165,41 +180,25 @@ def run_evaluate(config: dict):
     records = json.loads(scenarios_path.read_text())
     print(f"Loaded {len(records)} scenarios from {scenarios_path}")
 
-    all_results = {}
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     for adm_name, target_name in adm_entries:
         target = _load_alignment_target(target_name) if target_name else None
-        all_results[adm_name] = _run_adm(adm_name, records, target)
+        io_records = _run_adm(adm_name, records, target)
 
-    # Build comparison output
-    comparison = []
-    for i, record in enumerate(records):
-        scene_id = record["input"]["full_state"]["meta_info"]["scene_id"]
-        scenario_text = record["input"]["full_state"]["unstructured"]
-
-        entry = {
-            "scene_id": scene_id,
-            "scenario": scenario_text,
-            "adm_results": {},
-        }
-        for adm_name, _ in adm_entries:
-            r = all_results[adm_name][i]
-            entry["adm_results"][adm_name] = {
-                "chosen_action": r["chosen_action"],
-                "justification": r["justification"],
-            }
-        comparison.append(entry)
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(comparison, indent=2, default=str))
+        out_file = output_dir / f"{adm_name}_input_output.json"
+        out_file.write_text(json.dumps(io_records, indent=2, default=str))
+        print(f"Wrote {len(io_records)} records to {out_file}")
 
     # Print summary
     print(f"\n{'='*60}")
-    print("COMPARISON SUMMARY")
+    print("SUMMARY")
     print(f"{'='*60}")
-    for entry in comparison:
-        print(f"\nScene {entry['scene_id']}:")
-        for adm_name, _ in adm_entries:
-            choice = entry["adm_results"][adm_name]["chosen_action"]
-            print(f"  {adm_name:50s} → {choice}")
-
-    print(f"\nWrote {len(comparison)} results to {output_path}")
+    for adm_name, _ in adm_entries:
+        out_file = output_dir / f"{adm_name}_input_output.json"
+        io_records = json.loads(out_file.read_text())
+        choices = [r["output"]["action"]["unstructured"] for r in io_records]
+        unique = set(choices)
+        print(f"\n{adm_name}:")
+        for c in sorted(unique):
+            print(f"  {c}: {choices.count(c)}/{len(choices)}")

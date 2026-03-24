@@ -20,7 +20,7 @@ def load_config(path: str | Path) -> dict:
     config.setdefault("output", f"output/{behavior_id}/scenarios.json")
     config.setdefault("evaluate", {})
     config["evaluate"].setdefault("input", config["output"])
-    config["evaluate"].setdefault("output", f"output/{behavior_id}/eval_results.json")
+    config["evaluate"].setdefault("output", f"output/{behavior_id}")
 
     config["_config_path"] = str(config_path)
     config["_derived"] = {

@@ -61,14 +61,48 @@ def _requirements_for_frame(prompt_template: str) -> str:
     )
 
 
+def _load_kdma_definitions() -> dict:
+    """Load KDMA attribute definitions from align-system."""
+    try:
+        import align_system
+        from pathlib import Path
+        import yaml
+
+        attr_dir = Path(align_system.__file__).parent / "configs" / "attribute"
+        defs = {}
+        for f in attr_dir.glob("*.yaml"):
+            with open(f) as fh:
+                data = yaml.safe_load(fh)
+            if data and "kdma" in data and "description" in data:
+                defs[data["kdma"]] = data["description"]
+        return defs
+    except Exception:
+        return {}
+
+
+_kdma_defs = None
+
+
+def _get_kdma_defs() -> dict:
+    global _kdma_defs
+    if _kdma_defs is None:
+        _kdma_defs = _load_kdma_definitions()
+    return _kdma_defs
+
+
 def _format_active_kdmas(active_kdmas: dict) -> str:
     if not active_kdmas:
         return "- No explicit KDMA metadata provided."
+    defs = _get_kdma_defs()
     lines = []
     for kdma_name, tension in active_kdmas.items():
         favors = tension.get("favors", "unspecified option")
         strength = tension.get("strength", "unspecified")
-        lines.append(f"- {kdma_name}: favors {favors} with {strength} strength")
+        desc = defs.get(kdma_name, "")
+        line = f"- {kdma_name}: favors {favors} with {strength} strength"
+        if desc:
+            line += f"\n  Definition: {desc}"
+        lines.append(line)
     return "\n".join(lines)
 
 
