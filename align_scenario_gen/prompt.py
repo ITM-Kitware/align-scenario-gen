@@ -56,8 +56,8 @@ def _requirements_for_frame(prompt_template: str) -> str:
             "(2) the current patient's condition, (3) the evidence about other possible casualties and the direct choice"
         )
     return (
-        "Write exactly 3 sentences: (1) the setting, "
-        "(2) Patient A's injury and background, (3) Patient B's injury and background"
+        "Write EXACTLY 3 sentences, each under 40 words: "
+        "(1) the setting, (2) Patient A's injury and background, (3) Patient B's injury and background"
     )
 
 

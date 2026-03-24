@@ -19,13 +19,8 @@ def record_to_transcript(record: dict, kdma_name: str) -> dict | None:
     action = out.get("action", {})
     chosen = action.get("unstructured", "")
     justification = action.get("justification", "")
-    kdma_scores = action.get("kdma_association", {})
-    alignment_val = kdma_scores.get(kdma_name)
 
     assistant_content = f"I choose: {chosen}\n\nReasoning: {justification}"
-    if alignment_val is not None:
-        label = kdma_name.replace("_", " ").title()
-        assistant_content += f"\n\n[{label} alignment: {alignment_val}]"
 
     return {
         "conversation": [
