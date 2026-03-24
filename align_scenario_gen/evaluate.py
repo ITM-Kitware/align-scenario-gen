@@ -1,8 +1,11 @@
 """Run generated scenarios through align-system ADMs."""
 
 import json
+import time
 from pathlib import Path
 from types import SimpleNamespace
+
+import yaml
 
 
 def _hydrate(record):
@@ -120,18 +123,22 @@ def _run_adm(adm_name, records, alignment_target=None):
     choose_fn = getattr(instance, "top_level_choose_action", instance.choose_action)
 
     io_records = []
+    raw_times = []
     for i, record in enumerate(records):
         inp = record["input"]
         print(f"  [{adm_name}] Scenario {i + 1}/{len(records)}...")
 
         state, actions = _hydrate(inp)
 
+        t0 = time.time()
         raw_result = choose_fn(
             scenario_state=state,
             available_actions=actions,
             alignment_target=alignment_target,
             **inference_kwargs,
         )
+        elapsed = time.time() - t0
+        raw_times.append(elapsed)
 
         if isinstance(raw_result, tuple):
             action, choice_info = raw_result
@@ -159,7 +166,17 @@ def _run_adm(adm_name, records, alignment_target=None):
             "choice_info": choice_info if isinstance(choice_info, dict) else {},
         })
 
-    return io_records
+    timing = {
+        "scenarios": [{
+            "n_actions_taken": len(io_records),
+            "total_time_s": sum(raw_times),
+            "avg_time_s": sum(raw_times) / len(raw_times) if raw_times else 0,
+            "max_time_s": max(raw_times) if raw_times else 0,
+            "raw_times_s": raw_times,
+        }]
+    }
+
+    return io_records, timing
 
 
 def run_evaluate(config: dict):
@@ -180,23 +197,50 @@ def run_evaluate(config: dict):
     records = json.loads(scenarios_path.read_text())
     print(f"Loaded {len(records)} scenarios from {scenarios_path}")
 
-    output_dir.mkdir(parents=True, exist_ok=True)
-
     for adm_name, target_name in adm_entries:
         target = _load_alignment_target(target_name) if target_name else None
-        io_records = _run_adm(adm_name, records, target)
 
-        out_file = output_dir / f"{adm_name}_input_output.json"
-        out_file.write_text(json.dumps(io_records, indent=2, default=str))
-        print(f"Wrote {len(io_records)} records to {out_file}")
+        adm_dir = output_dir / adm_name
+        adm_dir.mkdir(parents=True, exist_ok=True)
+
+        io_records, timing = _run_adm(adm_name, records, target)
+
+        # input_output.json
+        (adm_dir / "input_output.json").write_text(
+            json.dumps(io_records, indent=2, default=str))
+
+        # timing.json
+        (adm_dir / "timing.json").write_text(
+            json.dumps(timing, indent=2))
+
+        # .hydra/config.yaml — match align-app's export format
+        hydra_dir = adm_dir / ".hydra"
+        hydra_dir.mkdir(exist_ok=True)
+        adm_config = _load_adm_config(adm_name)
+        target_for_config = target or {}
+        kdma_values = [
+            {"kdma": kv.get("kdma"), "value": kv.get("value"), "kdes": kv.get("kdes")}
+            for kv in target_for_config.get("kdma_values", [])
+        ] if target_for_config else []
+        hydra_config = {
+            "adm": adm_config,
+            "alignment_target": {
+                "id": target_for_config.get("id", "none"),
+                "kdma_values": kdma_values,
+            },
+        }
+        (hydra_dir / "config.yaml").write_text(
+            yaml.dump(hydra_config, default_flow_style=False, sort_keys=False))
+
+        print(f"Wrote {len(io_records)} records to {adm_dir}/")
 
     # Print summary
     print(f"\n{'='*60}")
     print("SUMMARY")
     print(f"{'='*60}")
     for adm_name, _ in adm_entries:
-        out_file = output_dir / f"{adm_name}_input_output.json"
-        io_records = json.loads(out_file.read_text())
+        io_file = output_dir / adm_name / "input_output.json"
+        io_records = json.loads(io_file.read_text())
         choices = [r["output"]["action"]["unstructured"] for r in io_records]
         unique = set(choices)
         print(f"\n{adm_name}:")
