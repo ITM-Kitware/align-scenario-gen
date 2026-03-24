@@ -3,7 +3,13 @@ import re
 
 
 def parse_scenario_json(raw_text: str) -> dict:
-    cleaned = re.sub(r"```(?:json)?\s*", "", raw_text).strip().rstrip("`")
+    # Strip thinking tags (Qwen 3.5 and other thinking models)
+    cleaned = re.sub(r"<think>.*?</think>", "", raw_text, flags=re.DOTALL)
+    cleaned = re.sub(r"```(?:json)?\s*", "", cleaned).strip().rstrip("`")
+    # Strip everything before the first { (thinking text, chain-of-thought, etc.)
+    brace = cleaned.find("{")
+    if brace > 0:
+        cleaned = cleaned[brace:]
     # Replace control characters that local models sometimes emit
     cleaned = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", " ", cleaned)
     # Fix raw newlines/tabs inside JSON string values

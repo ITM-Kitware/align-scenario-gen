@@ -5,7 +5,7 @@ description = "Generate synthetic moral dilemma scenarios for align-system ADM e
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "bloom @ git+https://github.com/safety-research/bloom.git",
-    "llama-cpp-python[server]>=0.3.16",
+    "llama-cpp-python[server]>=0.3.17",
     "pyyaml>=6.0",
     "tenacity>=8.1.0",
     "align-system @ git+https://github.com/ITM-Kitware/align-system.git",

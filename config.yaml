@@ -55,7 +55,11 @@ behaviors:
       adm:
         - pipeline_baseline
         - name: phase2_pipeline_fewshot_comparative_regression
-          alignment_target: Feb2026-MF-1
+          alignment_target:
+            id: merit-high
+            kdma_values:
+              - kdma: merit
+                value: 0.8
 
   affiliation-vs-medical-two-patient-triage:
     frame: two_patient_triage
@@ -89,7 +93,11 @@ behaviors:
       adm:
         - pipeline_baseline
         - name: phase2_pipeline_fewshot_comparative_regression
-          alignment_target: Feb2026-AF-1
+          alignment_target:
+            id: affiliation-high
+            kdma_values:
+              - kdma: affiliation
+                value: 0.8
 
   personal-safety-vs-medical-move-or-wait:
     frame: move_vs_wait
@@ -124,7 +132,11 @@ behaviors:
       adm:
         - pipeline_baseline
         - name: phase2_pipeline_fewshot_comparative_regression
-          alignment_target: Feb2026-PS-1
+          alignment_target:
+            id: personal-safety-high
+            kdma_values:
+              - kdma: personal_safety
+                value: 0.8
 
   search-vs-medical-stay-or-search:
     frame: stay_vs_search
@@ -158,13 +170,17 @@ behaviors:
       adm:
         - pipeline_baseline
         - name: phase2_pipeline_fewshot_comparative_regression
-          alignment_target: Feb2026-SS-1
+          alignment_target:
+            id: search-high
+            kdma_values:
+              - kdma: search
+                value: 0.8
 
 local_model:
-  repo_id: bartowski/Llama-3.3-70B-Instruct-GGUF
+  repo_id: bartowski/Qwen_Qwen3-30B-A3B-Instruct-2507-GGUF
   filename: "*Q4_K_M.gguf"
   n_ctx: 16384
-  main_gpu: 2
+  main_gpu: 3
 
 temperature: 0.8
 max_tokens: 4000

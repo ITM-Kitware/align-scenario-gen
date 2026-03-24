@@ -9,10 +9,7 @@ def load_config(path: str | Path) -> dict:
     with open(config_path) as f:
         config = yaml.safe_load(f) or {}
 
-    if _uses_behavior_library(config):
-        config = _resolve_behavior_library(config)
-    else:
-        config = _normalize_legacy_config(config)
+    config = _resolve_behavior_library(config)
 
     behavior_name = config["behavior"]["name"]
     behavior_id = config["_resolved"]["behavior_id"]
@@ -34,27 +31,6 @@ def load_config(path: str | Path) -> dict:
         "config_dir": "bloom-data",
     }
 
-    return config
-
-
-def _uses_behavior_library(config: dict) -> bool:
-    return all(key in config for key in ("run", "frames", "behaviors"))
-
-
-def _normalize_legacy_config(config: dict) -> dict:
-    config = deepcopy(config)
-    behavior_name = config["behavior"]["name"]
-    frame = {
-        "prompt_template": "two_patient_triage",
-        "action_topology": "choose_between_two_patients",
-        "choices": [{"label": label, "action_type": "SITREP"} for label in config["behavior"]["choices"]],
-    }
-    config["_resolved"] = {
-        "behavior_id": behavior_name,
-        "behavior": {"id": behavior_name},
-        "frame_id": frame["prompt_template"],
-        "frame": frame,
-    }
     return config
 
 

@@ -10,7 +10,7 @@ def main():
     parser.add_argument("config", help="Path to YAML config file")
     parser.add_argument(
         "--step",
-        choices=["convert", "bloom", "generate", "evaluate"],
+        choices=["convert", "bloom", "generate", "run-adm"],
         help="Run a single pipeline step (default: run all)",
     )
     args = parser.parse_args()
@@ -34,7 +34,7 @@ def main():
 
         run_generate(config)
 
-    if "evaluate" in steps:
+    if "run-adm" in steps:
         from .evaluate import run_evaluate
 
         run_evaluate(config)

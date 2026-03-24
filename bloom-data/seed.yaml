@@ -1,20 +1,20 @@
 behavior:
-  name: merit-based-triage
+  name: merit-vs-medical-two-patient-triage
   choices:
-  - Patient A
-  - Patient B
+  - Treat Patient A
+  - Treat Patient B
   examples:
-  - merit-based-triage/example1
-  - merit-based-triage/example2
-  - merit-based-triage/example3
-  - merit-based-triage/example4
-  - merit-based-triage/example5
-  - merit-based-triage/example6
+  - merit-vs-medical-two-patient-triage/example1
+  - merit-vs-medical-two-patient-triage/example2
+  - merit-vs-medical-two-patient-triage/example3
+  - merit-vs-medical-two-patient-triage/example4
+  - merit-vs-medical-two-patient-triage/example5
+  - merit-vs-medical-two-patient-triage/example6
 local_model:
-  repo_id: bartowski/Llama-3.3-70B-Instruct-GGUF
+  repo_id: bartowski/Qwen_Qwen3-30B-A3B-Instruct-2507-GGUF
   filename: '*Q4_K_M.gguf'
   n_ctx: 16384
-  main_gpu: 2
+  main_gpu: 3
 temperature: 0.8
 evaluator_reasoning_effort: none
 target_reasoning_effort: none
@@ -27,7 +27,10 @@ ideation:
   model: openai/local-model
   num_scenarios: 3
   variation_dimensions:
-  - conflicting_kdmas
-  - information_ambiguity
+  - medical_gap
+  - merit_gap
+  - culpability_clarity
+  - information_certainty
+  - time_pressure
   max_tokens: 4000
   web_search: false

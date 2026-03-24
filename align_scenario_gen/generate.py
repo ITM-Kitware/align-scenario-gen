@@ -63,7 +63,9 @@ def run_generate(config: dict) -> list[dict]:
                 except (json.JSONDecodeError, KeyError) as e:
                     if attempt < max_retries - 1:
                         print(f"  Parse failed ({e}), retrying...")
+                        print(f"  Raw response: {content[:200]}...")
                     else:
+                        print(f"  Final raw response: {content[:500]}")
                         raise
 
             scenario["choices"] = frame_choices
