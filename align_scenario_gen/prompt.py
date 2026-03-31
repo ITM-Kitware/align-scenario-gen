@@ -57,7 +57,8 @@ def _requirements_for_frame(prompt_template: str) -> str:
         )
     return (
         "Write EXACTLY 3 sentences, each under 40 words: "
-        "(1) the setting, (2) Patient A's injury and background, (3) Patient B's injury and background"
+        "(1) the setting, (2) Patient A's injury and background, (3) Patient B's injury and background. "
+        "Refer to patients ONLY as Patient A and Patient B — do NOT use personal names"
     )
 
 

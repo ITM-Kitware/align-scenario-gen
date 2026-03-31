@@ -22,11 +22,13 @@ def load_config(path: str | Path) -> dict:
     config["evaluate"].setdefault("input", config["output"])
     config["evaluate"].setdefault("output", f"output/{behavior_id}")
 
+    output_dir = str(Path(config["output"]).parent)
+
     config["_config_path"] = str(config_path)
     config["_derived"] = {
         "examples_dir": f"bloom-data/behaviors/examples/{behavior_name}",
-        "bloom_results_dir": f"bloom-results/{behavior_name}",
-        "ideation_file": f"bloom-results/{behavior_name}/ideation.json",
+        "bloom_results_dir": f"{output_dir}/bloom",
+        "ideation_file": f"{output_dir}/bloom/ideation.json",
         "seed_file": "bloom-data/seed.yaml",
         "config_dir": "bloom-data",
     }
